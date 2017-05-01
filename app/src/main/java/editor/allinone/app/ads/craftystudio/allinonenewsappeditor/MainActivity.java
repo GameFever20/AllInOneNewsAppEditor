@@ -12,6 +12,9 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -38,6 +41,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import com.twitter.sdk.android.Twitter;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
+import io.fabric.sdk.android.Fabric;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -48,27 +54,45 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import utils.ClickListener;
 import utils.DatabaseHandlerFirebase;
 import utils.NewsInfo;
 import utils.NewsMetaInfo;
 import utils.NewsSourceList;
+import utils.NewsSourcesRecyclerAdapter;
+import utils.RecyclerTouchListener;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
+    private static final String TWITTER_KEY = "XPcyxmVmGSPED5WdoiFBQzhTM";
+    private static final String TWITTER_SECRET = "tZElX2L8puW0NFlR52xocz3IAwECFU2L2R1gKTLaM5PynUWUwu";
+
+
     private static final String TAG = "Main";
-    private int SELECT_PICTURE=4;
-    public String imagePath="";
+    private int SELECT_PICTURE = 4;
+    public String imagePath = "";
 
     private FirebaseAuth mAuth;
     private Uri imageUri;
 
     NewsInfo newsInfo = new NewsInfo();
     NewsMetaInfo newsMetaInfo = new NewsMetaInfo();
+    HashMap<String, NewsSourceList> newsSourceListHashMap = new HashMap<>();
+    HashMap<String, Long> tweetHashMap = new HashMap<>();
+
+    ArrayList<NewsSourceList> newsSourceListArrayList = new ArrayList<>();
+    ArrayList<Long> tweetArrayList = new ArrayList<>();
+
+    NewsSourcesRecyclerAdapter newsSourcesRecyclerAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
+        Fabric.with(this, new Twitter(authConfig));
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -95,11 +119,12 @@ public class MainActivity extends AppCompatActivity
         signIn();
 
         //serializeNewsInfo();
-        deserializeNewsInfo();
+        //deserializeNewsInfo();
+        initializeRecyclerView();
 
     }
 
-    private void downloadImage( String pushKeyId) {
+    private void downloadImage(String pushKeyId) {
         DatabaseHandlerFirebase databaseHandlerFirebase = new DatabaseHandlerFirebase();
 
         databaseHandlerFirebase.addNewsListListner(new DatabaseHandlerFirebase.DataBaseHandlerNewsUploadListner() {
@@ -213,7 +238,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public void selectImageFromStorage(){
+    public void selectImageFromStorage() {
         // select a file
         Intent intent = new Intent();
         intent.setType("image/*");
@@ -248,14 +273,14 @@ public class MainActivity extends AppCompatActivity
 
         ImageView imageView = (ImageView) findViewById(R.id.newsFeed_newsImage_ImageView);
         imageView.setImageBitmap(image);
-        Toast.makeText(this, "path is "+ uri.getPath(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "path is " + uri.getPath(), Toast.LENGTH_SHORT).show();
 
         imageUri = uri;
     }
 
 
-    public void uploadImageToFirebase(final Uri imageUri ,String pushKeyId){
-        DatabaseHandlerFirebase databaseHandlerFirebase =new DatabaseHandlerFirebase();
+    public void uploadImageToFirebase(final Uri imageUri, String pushKeyId) {
+        DatabaseHandlerFirebase databaseHandlerFirebase = new DatabaseHandlerFirebase();
         databaseHandlerFirebase.addNewsListListner(new DatabaseHandlerFirebase.DataBaseHandlerNewsUploadListner() {
             @Override
             public void onNewsList(ArrayList<NewsMetaInfo> newsMetaInfoArrayList) {
@@ -274,7 +299,7 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onNewsImageLink(String ImageLink) {
-                Toast.makeText(MainActivity.this, "Image Link "+ImageLink, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Image Link " + ImageLink, Toast.LENGTH_SHORT).show();
                 imagePath = ImageLink;
             }
         });
@@ -282,15 +307,13 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
-
     public void UploadToFireBase(View view) {
         NewsMetaInfo newsMetaInfo = new NewsMetaInfo();
-        EditText editText = (EditText)findViewById(R.id.content_main_newsHeading_editText);
+        EditText editText = (EditText) findViewById(R.id.content_main_newsHeading_editText);
         newsMetaInfo.setNewsHeading(editText.getText().toString());
-        editText = (EditText)findViewById(R.id.content_main_newsdate_editText);
+        editText = (EditText) findViewById(R.id.content_main_newsdate_editText);
         newsMetaInfo.setNewsDate(editText.getText().toString());
-        editText = (EditText)findViewById(R.id.content_main_newscategory_editText);
+        editText = (EditText) findViewById(R.id.content_main_newscategory_editText);
         newsMetaInfo.setNewsSource(editText.getText().toString());
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -307,7 +330,6 @@ public class MainActivity extends AppCompatActivity
 
 
     public void uploadDummyData(View view) {
-
 
 
         DatabaseHandlerFirebase databaseHandlerFirebase = new DatabaseHandlerFirebase();
@@ -329,7 +351,7 @@ public class MainActivity extends AppCompatActivity
         newsInfo.setNewsNotify("yes");
         newsInfo.setNewsTime("1500");
 
-        HashMap<String , NewsSourceList> newsSourceListHashMap =new HashMap<>();
+        HashMap<String, NewsSourceList> newsSourceListHashMap = new HashMap<>();
         NewsSourceList newsSourceList = new NewsSourceList();
         newsSourceList.setNewsListHeading("Heading for source 1 else nothing toshow w");
         newsSourceList.setNewsListArticle("News Sumahagdsj cb hcmb ybfd vbhre vs  Hello guys, welcome to Firebase Storage Tutorial for Android. In this tutorial we are going to learn how you can upload images to firebase storage. Infact not only images you can use this firebase storage android tutorial to upload any kind of file to firebase storage. So lets start our Firebase Storage Tutorial.\n" +
@@ -340,9 +362,6 @@ public class MainActivity extends AppCompatActivity
         newsSourceList.setSourceIndex(0);
 
         newsSourceListHashMap.put("Source 1", newsSourceList);
-
-
-
 
 
         NewsSourceList newsSourceList2 = new NewsSourceList();
@@ -371,15 +390,15 @@ public class MainActivity extends AppCompatActivity
 
         newsInfo.setNewsSourceListHashMap(newsSourceListHashMap);
 
-        HashMap<String , Long> newsTweetHashMap =new HashMap<>();
-        newsTweetHashMap.put("tweet1" ,858655214517141504L);
-        newsTweetHashMap.put("tweet2" ,858758633051627520L);
-        newsTweetHashMap.put("tweet3" ,858769350437724160L);
+        HashMap<String, Long> newsTweetHashMap = new HashMap<>();
+        newsTweetHashMap.put("tweet1", 858655214517141504L);
+        newsTweetHashMap.put("tweet2", 858758633051627520L);
+        newsTweetHashMap.put("tweet3", 858769350437724160L);
 
         newsInfo.setNewsTweetListHashMap(newsTweetHashMap);
 
 
-        databaseHandlerFirebase.insertNewsFullArticle(newsMetaInfo ,newsInfo , imageUri);
+        databaseHandlerFirebase.insertNewsFullArticle(newsMetaInfo, newsInfo, imageUri);
         databaseHandlerFirebase.addNewsListListner(new DatabaseHandlerFirebase.DataBaseHandlerNewsUploadListner() {
             @Override
             public void onNewsList(ArrayList<NewsMetaInfo> newsMetaInfoArrayList) {
@@ -404,7 +423,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void serializeNewsInfo(){
+    public void serializeNewsInfo() {
 
         NewsInfo newsInfo = new NewsInfo();
         newsInfo.setNewsSummary("News Sumahagdsj cb hcmb ybfd vbhre vs  Hello guys, welcome to Firebase Storage Tutorial for Android. In this tutorial we are going to learn how you can upload images to firebase storage. Infact not only images you can use this firebase storage android tutorial to upload any kind of file to firebase storage. So lets start our Firebase Storage Tutorial.\n" +
@@ -416,7 +435,7 @@ public class MainActivity extends AppCompatActivity
         newsInfo.setNewsNotify("yes");
         newsInfo.setNewsTime("1500");
 
-        HashMap<String , NewsSourceList> newsSourceListHashMap =new HashMap<>();
+        HashMap<String, NewsSourceList> newsSourceListHashMap = new HashMap<>();
         NewsSourceList newsSourceList = new NewsSourceList();
         newsSourceList.setNewsListHeading("Heading for source 1 else nothing toshow w");
         newsSourceList.setNewsListArticle("News Sumahagdsj cb hcmb ybfd vbhre vs  Hello guys, welcome to Firebase Storage Tutorial for Android. In this tutorial we are going to learn how you can upload images to firebase storage. Infact not only images you can use this firebase storage android tutorial to upload any kind of file to firebase storage. So lets start our Firebase Storage Tutorial.\n" +
@@ -427,9 +446,6 @@ public class MainActivity extends AppCompatActivity
         newsSourceList.setSourceIndex(0);
 
         newsSourceListHashMap.put("Source 1", newsSourceList);
-
-
-
 
 
         NewsSourceList newsSourceList2 = new NewsSourceList();
@@ -458,46 +474,40 @@ public class MainActivity extends AppCompatActivity
 
         newsInfo.setNewsSourceListHashMap(newsSourceListHashMap);
 
-        HashMap<String , Long> newsTweetHashMap =new HashMap<>();
-        newsTweetHashMap.put("tweet1" ,858655214517141504L);
-        newsTweetHashMap.put("tweet2" ,858758633051627520L);
-        newsTweetHashMap.put("tweet3" ,858769350437724160L);
+        HashMap<String, Long> newsTweetHashMap = new HashMap<>();
+        newsTweetHashMap.put("tweet1", 858655214517141504L);
+        newsTweetHashMap.put("tweet2", 858758633051627520L);
+        newsTweetHashMap.put("tweet3", 858769350437724160L);
 
         newsInfo.setNewsTweetListHashMap(newsTweetHashMap);
 
 
         String filename = "newsinfo1.ser";
 
-        try
-        {
+        try {
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File("/sdcard/save_object.bin"))); //Select where you wish to save the file...
             oos.writeObject(newsInfo); // write the class as an 'object'
             oos.flush(); // flush the stream to insure all of the information was written to 'save_object.bin'
             oos.close();// close the stream
-        }
-        catch(Exception ex)
-        {
-            Log.v("Serialization  Error : ",ex.getMessage());
+        } catch (Exception ex) {
+            Log.v("Serialization  Error : ", ex.getMessage());
             ex.printStackTrace();
         }
 
     }
 
-    public void deserializeNewsInfo(){
+    public void deserializeNewsInfo() {
         String filename = "newsinfo1.ser";
-        NewsInfo newsInfo=null;
-        try
-        {
+        NewsInfo newsInfo = null;
+        try {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File("/sdcard/save_object.bin")));
             newsInfo = (NewsInfo) ois.readObject();
 
-        }
-        catch(Exception ex)
-        {
-            Log.v("Serialization  Error : ",ex.getMessage());
+        } catch (Exception ex) {
+            Log.v("Serialization  Error : ", ex.getMessage());
             ex.printStackTrace();
         }
-        Log.d(TAG, "deserializeNewsInfo: "+newsInfo);
+        Log.d(TAG, "deserializeNewsInfo: " + newsInfo);
     }
 
     public void openAlertDialog(View view) {
@@ -511,17 +521,17 @@ public class MainActivity extends AppCompatActivity
 
         builder.setView(modifyView);
 
-        final EditText editText = (EditText)modifyView.findViewById(R.id.dialogue_editText);
+        final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_editText);
 
 // Set up the buttons
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-               // String m_Text = input.getText().toString();
-               // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
+                // String m_Text = input.getText().toString();
+                // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
 
                 String text = editText.getText().toString();
-                Toast.makeText(MainActivity.this, "text is - "+text, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "text is - " + text, Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -544,6 +554,79 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    private void initializeRecyclerView() {
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.newsFeed_newsSourceList_recyclerView);
+        newsSourcesRecyclerAdapter = new NewsSourcesRecyclerAdapter(newsSourceListArrayList, this);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        //recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        recyclerView.setAdapter(newsSourcesRecyclerAdapter);
+
+        recyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), recyclerView, new ClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                //Toast.makeText(NewsFeedActivity.this, "Item clicked = " + position, Toast.LENGTH_SHORT).show();
+                newsSourceListArrayList.remove(position);
+                newsSourcesRecyclerAdapter.notifyDataSetChanged();
+
+            }
+
+            @Override
+            public void onLongClick(View view, int position) {
+
+                openNewsSourceListDialogue(position);
+            }
+        }));
+
+    }
+
+    private void openNewsSourceListDialogue(final int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add News Source");
+
+        LayoutInflater inflater = getLayoutInflater();
+
+        final View modifyView = inflater.inflate(R.layout.dialogue_newssource_layout, null);
+
+        builder.setView(modifyView);
+
+        final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_newssource_heading_editText);
+        editText.setText(newsSourceListArrayList.get(position).getNewsListHeading());
+        final EditText articleEdittext = (EditText) modifyView.findViewById(R.id.dialogue_newssource_article_editText);
+        articleEdittext.setText(newsSourceListArrayList.get(position).getNewsListArticle());
+        // Set up the buttons
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // String m_Text = input.getText().toString();
+                // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
+
+                String headingtext = editText.getText().toString();
+
+
+                NewsSourceList newsSourceList = new NewsSourceList();
+                newsSourceList.setNewsListHeading(headingtext);
+
+                headingtext = articleEdittext.getText().toString();
+                newsSourceList.setNewsListArticle(headingtext);
+
+                newsSourceListArrayList.remove(position);
+                newsSourceListArrayList.add(newsSourceList);
+                newsSourcesRecyclerAdapter.notifyDataSetChanged();
+
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
     public void onHeadingClick(View view) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -555,8 +638,8 @@ public class MainActivity extends AppCompatActivity
 
         builder.setView(modifyView);
 
-        final EditText editText = (EditText)modifyView.findViewById(R.id.dialogue_editText);
-        if (newsMetaInfo.getNewsHeading()!=null) {
+        final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_editText);
+        if (newsMetaInfo.getNewsHeading() != null) {
             editText.setText(newsMetaInfo.getNewsHeading());
         }
 // Set up the buttons
@@ -584,7 +667,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     public void onNewsSummaryClick(View view) {
 
 
@@ -597,8 +679,8 @@ public class MainActivity extends AppCompatActivity
 
         builder.setView(modifyView);
 
-        final EditText editText = (EditText)modifyView.findViewById(R.id.dialogue_editText);
-        if (newsInfo.getNewsSummary()!=null) {
+        final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_editText);
+        if (newsInfo.getNewsSummary() != null) {
             editText.setText(newsInfo.getNewsSummary());
         }
 // Set up the buttons
@@ -625,6 +707,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onNewsSourceClick(View view) {
+
     }
 
     public void onNewsImageClick(View view) {
@@ -632,9 +715,90 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onAddSourceButtonClick(View view) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add News Source");
+
+        LayoutInflater inflater = getLayoutInflater();
+
+        final View modifyView = inflater.inflate(R.layout.dialogue_newssource_layout, null);
+
+        builder.setView(modifyView);
+
+        final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_newssource_heading_editText);
+        final EditText articleEdittext = (EditText) modifyView.findViewById(R.id.dialogue_newssource_article_editText);
+
+// Set up the buttons
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // String m_Text = input.getText().toString();
+                // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
+
+                String headingtext = editText.getText().toString();
+
+
+                NewsSourceList newsSourceList = new NewsSourceList();
+                newsSourceList.setNewsListHeading(headingtext);
+
+                headingtext = articleEdittext.getText().toString();
+                newsSourceList.setNewsListArticle(headingtext);
+
+                newsSourceListArrayList.add(newsSourceList);
+                newsSourcesRecyclerAdapter.notifyDataSetChanged();
+
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
     }
 
     public void onAddTweetClik(View view) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add Tweet id");
+
+        LayoutInflater inflater = getLayoutInflater();
+
+        final View modifyView = inflater.inflate(R.layout.dialoguebox_edittext_layout, null);
+
+        builder.setView(modifyView);
+
+        final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_editText);
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+
+// Set up the buttons
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // String m_Text = input.getText().toString();
+                // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
+
+                String text = editText.getText().toString();
+                Long tweetid = Long.getLong(text);
+
+                tweetHashMap.put("tweet" + tweetHashMap.size(), tweetid);
+
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
+
     }
 
     public void onPreviewClick(View view) {
