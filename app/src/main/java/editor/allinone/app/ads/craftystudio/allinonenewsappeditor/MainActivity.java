@@ -2,6 +2,7 @@ package editor.allinone.app.ads.craftystudio.allinonenewsappeditor;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -29,6 +30,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,9 +44,19 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.twitter.sdk.android.Twitter;
+import com.twitter.sdk.android.core.Callback;
+import com.twitter.sdk.android.core.Result;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.TwitterException;
+import com.twitter.sdk.android.core.models.Tweet;
+import com.twitter.sdk.android.tweetui.TweetUtils;
+import com.twitter.sdk.android.tweetui.TweetView;
+
 import io.fabric.sdk.android.Fabric;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -121,6 +134,7 @@ public class MainActivity extends AppCompatActivity
         //serializeNewsInfo();
         //deserializeNewsInfo();
         initializeRecyclerView();
+        newsInfo.setNewsTweetListHashMap(tweetHashMap);
 
     }
 
@@ -254,6 +268,7 @@ public class MainActivity extends AppCompatActivity
                 Uri selectedImageUri = data.getData();
 
 
+                Toast.makeText(this, "encoded path is " + selectedImageUri.getEncodedPath(), Toast.LENGTH_SHORT).show();
                 try {
                     getBitmapFromUri(selectedImageUri);
                 } catch (IOException e) {
@@ -554,6 +569,43 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    private void addTweetView() {
+        final LinearLayout myLayout
+                = (LinearLayout) findViewById(R.id.my_tweet_layout);
+
+        myLayout.removeAllViews();
+        // TODO: Use a more specific parent
+
+        // TODO: Base this Tweet ID on some data from elsewhere in your app
+
+
+        for (int i = 0; i < tweetArrayList.size(); i++) {
+
+
+            TweetUtils.loadTweet(tweetArrayList.get(i), new Callback<Tweet>() {
+                @Override
+                public void success(Result<Tweet> result) {
+                    TweetView tweetView = new TweetView(MainActivity.this, result.data);
+
+                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+                    layoutParams.setMargins(30, 20, 30, 20);
+
+
+                    myLayout.addView(tweetView, layoutParams);
+                }
+
+                @Override
+                public void failure(TwitterException exception) {
+                    Log.d("TwitterKit", "Load Tweet failure", exception);
+                }
+            });
+        }
+
+
+    }
+
     private void initializeRecyclerView() {
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.newsFeed_newsSourceList_recyclerView);
         newsSourcesRecyclerAdapter = new NewsSourcesRecyclerAdapter(newsSourceListArrayList, this);
@@ -595,6 +647,8 @@ public class MainActivity extends AppCompatActivity
         editText.setText(newsSourceListArrayList.get(position).getNewsListHeading());
         final EditText articleEdittext = (EditText) modifyView.findViewById(R.id.dialogue_newssource_article_editText);
         articleEdittext.setText(newsSourceListArrayList.get(position).getNewsListArticle());
+        final Spinner spinner = (Spinner) modifyView.findViewById(R.id.dialogue_newssource_source_spinner);
+        spinner.setSelection(newsSourceListArrayList.get(position).getSourceIndex());
         // Set up the buttons
         builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             @Override
@@ -707,6 +761,30 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onNewsSourceClick(View view) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Tweet to delete")
+                .setItems(R.array.source_list, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // The 'which' argument contains the index position
+                        // of the selected item
+
+                        String sourcename = getResources().getStringArray(R.array.source_list)[which];
+
+                        newsInfo.setNewsSource(sourcename);
+                        newsMetaInfo.setNewsSource(sourcename);
+                        sourcename = getResources().getStringArray(R.array.source_list_short)[which];
+                        newsMetaInfo.setNewsSourceShort(sourcename);
+                        newsInfo.setNewsSourceShort(sourcename);
+
+                        newsMetaInfo.setNewsSourceimageIndex(which);
+
+                        Toast.makeText(MainActivity.this, "Source is" + sourcename, Toast.LENGTH_SHORT).show();
+
+
+                    }
+                });
+        builder.create();
+        builder.show();
 
     }
 
@@ -728,6 +806,7 @@ public class MainActivity extends AppCompatActivity
         final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_newssource_heading_editText);
         final EditText articleEdittext = (EditText) modifyView.findViewById(R.id.dialogue_newssource_article_editText);
 
+        final Spinner spinner = (Spinner) modifyView.findViewById(R.id.dialogue_newssource_source_spinner);
 // Set up the buttons
         builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             @Override
@@ -743,6 +822,13 @@ public class MainActivity extends AppCompatActivity
 
                 headingtext = articleEdittext.getText().toString();
                 newsSourceList.setNewsListArticle(headingtext);
+
+                int itempostion = spinner.getSelectedItemPosition();
+
+                newsSourceList.setNewsListSource(getResources().getStringArray(R.array.source_list)[itempostion]);
+                newsSourceList.setNewsSourceShort(getResources().getStringArray(R.array.source_list_short)[itempostion]);
+
+                newsSourceList.setSourceIndex(itempostion);
 
                 newsSourceListArrayList.add(newsSourceList);
                 newsSourcesRecyclerAdapter.notifyDataSetChanged();
@@ -783,9 +869,11 @@ public class MainActivity extends AppCompatActivity
                 // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
 
                 String text = editText.getText().toString();
-                Long tweetid = Long.getLong(text);
+                Long tweetid = Long.parseLong(text);
 
-                tweetHashMap.put("tweet" + tweetHashMap.size(), tweetid);
+
+                tweetArrayList.add(tweetid);
+                addTweetView();
 
             }
         });
@@ -802,10 +890,457 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onPreviewClick(View view) {
+        getObjectPrefrenceListDialogue();
     }
 
     public void onSchduleClick(View view) {
+
+
+        //buildNewsPost();
+
+        buildNewsPost();
+
+
+        Toast.makeText(this, "Added in memory " + putObjectInPrefrence(), Toast.LENGTH_SHORT).show();
+
+        //Toast.makeText(this, "Added in memory "+putObjectInPrefrence(), Toast.LENGTH_SHORT).show();
+
     }
 
+    public void setPreferenceObject1(NewsInfo newsInfo, NewsMetaInfo newsMetaInfo, Uri ImagePath) {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(newsInfo); // myObject - instance of MyObject
+        prefsEditor.putString("MyObject1newsInfo", json);
+
+        json = gson.toJson(newsMetaInfo);
+        prefsEditor.putString("MyObject1newsMetaInfo", json);
+
+        //json = gson.toJson(imageUri);
+
+        //prefsEditor.putString("MyObject1newsImagePath", imageUri.getPath());
+
+        prefsEditor.putBoolean("MyObject1isEmpty", false);
+
+        prefsEditor.apply();
+    }
+
+    public void setPreferenceObject2(NewsInfo newsInfo, NewsMetaInfo newsMetaInfo, Uri ImagePath) {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(newsInfo); // myObject - instance of MyObject
+        prefsEditor.putString("MyObject2newsInfo", json);
+
+        json = gson.toJson(newsMetaInfo);
+        prefsEditor.putString("MyObject2newsMetaInfo", json);
+
+        //json = gson.toJson(imageUri);
+
+        //prefsEditor.putString("MyObject2newsImagePath", imageUri.getPath());
+
+        prefsEditor.putBoolean("MyObject2isEmpty", false);
+
+        prefsEditor.apply();
+    }
+
+    public void setPreferenceObject3(NewsInfo newsInfo, NewsMetaInfo newsMetaInfo, Uri ImagePath) {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(newsInfo); // myObject - instance of MyObject
+        prefsEditor.putString("MyObject3newsInfo", json);
+
+        json = gson.toJson(newsMetaInfo);
+        prefsEditor.putString("MyObject3newsMetaInfo", json);
+
+        //json = gson.toJson(imageUri);
+
+        //prefsEditor.putString("MyObject3newsImagePath", imageUri.getPath());
+
+        prefsEditor.putBoolean("MyObject3isEmpty", false);
+
+        prefsEditor.apply();
+    }
+
+    public void setPreferenceObject4(NewsInfo newsInfo, NewsMetaInfo newsMetaInfo, Uri ImagePath) {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(newsInfo); // myObject - instance of MyObject
+        prefsEditor.putString("MyObject4newsInfo", json);
+
+        json = gson.toJson(newsMetaInfo);
+        prefsEditor.putString("MyObject4newsMetaInfo", json);
+
+        //json = gson.toJson(imageUri);
+
+        //prefsEditor.putString("MyObject4newsImagePath", imageUri.getPath());
+
+        prefsEditor.putBoolean("MyObject4isEmpty", false);
+
+        prefsEditor.apply();
+    }
+
+    public void setPreferenceObject5(NewsInfo newsInfo, NewsMetaInfo newsMetaInfo, Uri ImagePath) {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(newsInfo); // myObject - instance of MyObject
+        prefsEditor.putString("MyObject5newsInfo", json);
+
+        json = gson.toJson(newsMetaInfo);
+        prefsEditor.putString("MyObject5newsMetaInfo", json);
+
+        //json = gson.toJson(imageUri);
+        //prefsEditor.putString("MyObject5newsImagePath", imageUri.getPath());
+
+        prefsEditor.putBoolean("MyObject5isEmpty", false);
+
+        prefsEditor.apply();
+    }
+
+    public boolean putObjectInPrefrence() {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+
+        if (mPrefs.getBoolean("MyObject1isEmpty", true)) {
+            setPreferenceObject1(newsInfo, newsMetaInfo, imageUri);
+            return true;
+        } else if (mPrefs.getBoolean("MyObject2isEmpty", true)) {
+            setPreferenceObject2(newsInfo, newsMetaInfo, imageUri);
+            return true;
+        } else if (mPrefs.getBoolean("MyObject3isEmpty", true)) {
+            setPreferenceObject3(newsInfo, newsMetaInfo, imageUri);
+            return true;
+        } else if (mPrefs.getBoolean("MyObject4isEmpty", true)) {
+            setPreferenceObject4(newsInfo, newsMetaInfo, imageUri);
+
+            return true;
+        } else if (mPrefs.getBoolean("MyObject5isEmpty", true)) {
+            setPreferenceObject5(newsInfo, newsMetaInfo, imageUri);
+            return true;
+        }
+
+        return false;
+    }
+
+    public void getObjectPrefrenceListDialogue() {
+        String[] stringArray = {"", "", "", "", ""};
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = "";
+        try {
+            if (!mPrefs.getBoolean("MyObject1isEmpty", true)) {
+                json = mPrefs.getString("MyObject1newsMetaInfo", "");
+                NewsMetaInfo newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+                stringArray[0] = newsMetaInfo.getNewsHeading();
+            }
+
+            if (!mPrefs.getBoolean("MyObject2isEmpty", true)) {
+                json = mPrefs.getString("MyObject2newsMetaInfo", "");
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                stringArray[1] = newsMetaInfo.getNewsHeading();
+            }
+
+            if (!mPrefs.getBoolean("MyObject3isEmpty", true)) {
+                json = mPrefs.getString("MyObject3newsMetaInfo", "");
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                stringArray[2] = newsMetaInfo.getNewsHeading();
+            }
+
+            if (mPrefs.getBoolean("MyObject4isEmpty", true)) {
+                json = mPrefs.getString("MyObject4newsMetaInfo", "");
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                stringArray[3] = newsMetaInfo.getNewsHeading();
+            }
+
+            if (mPrefs.getBoolean("MyObject5isEmpty", true)) {
+                json = mPrefs.getString("MyObject5newsMetaInfo", "");
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                stringArray[4] = newsMetaInfo.getNewsHeading();
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select post to open")
+                .setItems(stringArray, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // The 'which' argument contains the index position
+                        // of the selected item
+
+                        switch (which) {
+                            case 0:
+                                getPreferenceObject1();
+                                break;
+                            case 1:
+                                getPreferenceObject2();
+                                break;
+                            case 2:
+                                getPreferenceObject3();
+                                break;
+                            case 3:
+                                getPreferenceObject4();
+                                break;
+                            case 4:
+                                getPreferenceObject5();
+                                break;
+                        }
+
+                    }
+                });
+        builder.create();
+        builder.show();
+
+
+    }
+
+    public void getPreferenceObject1() {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+
+        try {
+            boolean isEmpty = mPrefs.getBoolean("MyObject1isEmpty", true);
+
+            Gson gson = new Gson();
+            String json = mPrefs.getString("MyObject1newsInfo", "");
+            newsInfo = gson.fromJson(json, NewsInfo.class);
+
+
+            json = mPrefs.getString("MyObject1newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+            SharedPreferences.Editor prefsEditor = mPrefs.edit();
+            prefsEditor.putBoolean("MyObject1isEmpty", true);
+            prefsEditor.apply();
+            initializeActivity();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        //imagePath = mPrefs.getString("MyObject1newsImagePath", "");
+        //imagePath = gson.fromJson(json, Uri.class);
+
+
+    }
+
+    private void initializeActivity() {
+
+        TextView textView = (TextView) findViewById(R.id.newsFeed_newsHeading_textView);
+        textView.setText(newsInfo.getNewsHeadline());
+
+
+        textView = (TextView) findViewById(R.id.newsFeed_newsSummary_textView);
+        textView.setText(newsInfo.getNewsSummary());
+
+
+        newsSourceListArrayList.clear();
+        for (NewsSourceList newssourceList : newsInfo.getNewsSourceListHashMap().values()) {
+            newsSourceListArrayList.add(newssourceList);
+        }
+        tweetArrayList.clear();
+        initializeRecyclerView();
+        for (Long tweetid : newsInfo.getNewsTweetListHashMap().values()) {
+            tweetArrayList.add(tweetid);
+        }
+        addTweetView();
+
+
+    }
+
+    public void getPreferenceObject2() {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+        try {
+            boolean isEmpty = mPrefs.getBoolean("MyObject2isEmpty", true);
+
+            Gson gson = new Gson();
+            String json = mPrefs.getString("MyObject2newsInfo", "");
+            newsInfo = gson.fromJson(json, NewsInfo.class);
+
+
+            json = mPrefs.getString("MyObject2newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+            SharedPreferences.Editor prefsEditor = mPrefs.edit();
+            prefsEditor.putBoolean("MyObject2isEmpty", true);
+
+            prefsEditor.apply();
+
+            //imagePath = mPrefs.getString("MyObject2newsImagePath", "");
+            //imageUri = gson.fromJson(json, Uri.class);
+            //Toast.makeText(this, "image pathis "+imagePath, Toast.LENGTH_SHORT).show();
+            initializeActivity();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public void getPreferenceObject3() {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+        try {
+            boolean isEmpty = mPrefs.getBoolean("MyObject3isEmpty", true);
+
+            Gson gson = new Gson();
+            String json = mPrefs.getString("MyObject3newsInfo", "");
+            newsInfo = gson.fromJson(json, NewsInfo.class);
+
+
+            json = mPrefs.getString("MyObject3newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+            SharedPreferences.Editor prefsEditor = mPrefs.edit();
+            prefsEditor.putBoolean("MyObject3isEmpty", true);
+
+            //imagePath = mPrefs.getString("MyObject3newsImagePath", "");
+            // = gson.fromJson(json, Uri.class);
+            prefsEditor.apply();
+            initializeActivity();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void getPreferenceObject4() {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+        try {
+            boolean isEmpty = mPrefs.getBoolean("MyObject4isEmpty", true);
+
+            Gson gson = new Gson();
+            String json = mPrefs.getString("MyObject4newsInfo", "");
+            newsInfo = gson.fromJson(json, NewsInfo.class);
+
+
+            json = mPrefs.getString("MyObject4newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+            SharedPreferences.Editor prefsEditor = mPrefs.edit();
+            prefsEditor.putBoolean("MyObject4isEmpty", true);
+
+            //imagePath = mPrefs.getString("MyObject4newsImagePath", "");
+            //imageUri = gson.fromJson(json, Uri.class);
+            prefsEditor.apply();
+            initializeActivity();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void getPreferenceObject5() {
+        SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+        try {
+            boolean isEmpty = mPrefs.getBoolean("MyObject5isEmpty", true);
+
+            Gson gson = new Gson();
+            String json = mPrefs.getString("MyObject5newsInfo", "");
+            newsInfo = gson.fromJson(json, NewsInfo.class);
+
+
+            json = mPrefs.getString("MyObject5newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+            SharedPreferences.Editor prefsEditor = mPrefs.edit();
+            prefsEditor.putBoolean("MyObject5isEmpty", true);
+
+            //imagePath = mPrefs.getString("MyObject5newsImagePath", "");
+            //imageUri = gson.fromJson(json, Uri.class);
+            prefsEditor.apply();
+            initializeActivity();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public void onTweetViewClick(View view) {
+        String[] tweetarray = new String[tweetArrayList.size()];
+        for (int i = 0; i < tweetArrayList.size(); i++) {
+            tweetarray[i] = tweetArrayList.get(i) + "";
+
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Tweet to delete")
+                .setItems(tweetarray, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // The 'which' argument contains the index position
+                        // of the selected item
+
+                        tweetArrayList.remove(which);
+                        addTweetView();
+                    }
+                });
+        builder.create();
+        builder.show();
+    }
+
+    public void onUploadNewsArticleClick(View view) {
+
+        buildNewsPost();
+
+        DatabaseHandlerFirebase databaseHandlerFirebase =new DatabaseHandlerFirebase();
+        databaseHandlerFirebase.insertNewsFullArticle(newsMetaInfo, newsInfo, imageUri);
+        databaseHandlerFirebase.addNewsListListner(new DatabaseHandlerFirebase.DataBaseHandlerNewsUploadListner() {
+            @Override
+            public void onNewsList(ArrayList<NewsMetaInfo> newsMetaInfoArrayList) {
+
+            }
+
+            @Override
+            public void onNewsImageFetched(File imageFile) {
+
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+
+            @Override
+            public void onNewsImageLink(String ImageLink) {
+
+            }
+        });
+
+    }
+
+    public void buildNewsPost() {
+        for (int i = 0; i < newsSourceListArrayList.size(); i++) {
+
+            newsSourceListHashMap.put("source" + i, newsSourceListArrayList.get(i));
+
+        }
+
+        for (int i = 0; i < tweetArrayList.size(); i++) {
+            tweetHashMap.put("tweet" + i, tweetArrayList.get(i));
+
+        }
+
+        newsInfo.setNewsSourceListHashMap(newsSourceListHashMap);
+        newsInfo.setNewsTweetListHashMap(tweetHashMap);
+
+
+        newsMetaInfo.setNewsTime(System.currentTimeMillis());
+
+        Log.d(TAG, "buildNewsPost: " + newsInfo);
+        Log.d(TAG, "buildNewsPost: " + newsMetaInfo);
+        Log.d(TAG, "buildNewsPost: " + imageUri);
+
+
+    }
 
 }

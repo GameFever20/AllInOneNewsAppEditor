@@ -133,7 +133,9 @@
             android:id="@+id/my_tweet_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_marginBottom="30dp"
+            >
 
         </LinearLayout>
 
@@ -142,6 +144,13 @@
             android:layout_height="wrap_content"
             android:text="Add Tweet"
             android:onClick="onAddTweetClik"
+            />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Remove some  Tweet"
+            android:onClick="onTweetViewClick"
             />
 
         <LinearLayout
@@ -187,7 +196,7 @@
             android:id="@+id/content_main_upload_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="UploadToFireBase"
+            android:onClick="onUploadNewsArticleClick"
             android:text="Upload" />
 
         <Button
@@ -195,6 +204,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="uploadDummyData"
+            android:visibility="gone"
             android:text="Upload Dummy Data" />
 
         <Button
@@ -202,14 +212,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="onPreviewClick"
-            android:text="Preview" />
+            android:text="Load From memory" />
 
         <Button
             android:id="@+id/content_main_schedule_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="onSchduleClick"
-            android:text="Schedule" />
+            android:text="Save in memory" />
 
 
 

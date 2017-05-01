@@ -5,4 +5,115 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+
+    <string-array name="source_list">
+        <item>ABP News</item>
+        <item>India TV</item>
+        <item>India News</item>
+        <item>Zee News</item>
+        <item>IBN 7</item>
+        <item>News 24</item>
+        <item>DD News</item>
+        <item>Ajj Tak</item>
+        <item>Tez</item>
+        <item>NDTV India</item>
+        <item>ET Now</item>
+        <item>NDTV Profit</item>
+        <item>Times Now</item>
+        <item>BBC World</item>
+        <item>CNN</item>
+        <item>News 9</item>
+        <item>NDTV 24x7</item>
+        <item>Headlines Today</item>
+        <item>CNN IBN</item>
+        <item>Bloomberg</item>
+        <item>CNBC TV 18</item>
+        <item>The Times of India</item>
+        <item>Hindustan Times</item>
+        <item>Indian Express</item>
+        <item>Pioneer</item>
+        <item>The Hindu</item>
+        <item>Deccan Chronicle</item>
+        <item>The Economic Times</item>
+        <item>DNA</item>
+        <item>The Tribune</item>
+        <item>The Telegraph</item>
+        <item>Hindustan Times</item>
+        <item>Jagran</item>
+        <item>Dainik Bhaskar</item>
+        <item>Amar Ujala</item>
+        <item>Hindustan</item>
+        <item>Rajasthan Patrika</item>
+        <item>Navbharat Times</item>
+        <item>Punjab Kesari</item>
+        <item>Bussiness Standard</item>
+        <item>Financial Express</item>
+        <item>Mid Day</item>
+        <item>The Asian Age</item>
+        <item>News 18</item>
+        <item>Live Mint</item>
+        <item>Greater Kashmir</item>
+        <item>The Express Tribune</item>
+        <item>First Post</item>
+        <item>IndiaToday.in</item>
+        <item>India Today</item>
+
+    </string-array>
+
+
+    <string-array name="source_list_short">
+        <item>ABP</item>
+        <item>IT</item>
+        <item>IN</item>
+        <item>Zee</item>
+        <item>IBN</item>
+        <item>N24</item>
+        <item>DD</item>
+        <item>AT</item>
+        <item>TEZ</item>
+        <item>NDI</item>
+        <item>ET</item>
+        <item>NDP</item>
+        <item>TN</item>
+        <item>BBC</item>
+        <item>CNN</item>
+        <item>N9</item>
+        <item>ND</item>
+        <item>HLT</item>
+        <item>CI</item>
+        <item>B</item>
+        <item>CNB</item>
+        <item>TOI</item>
+        <item>HT</item>
+        <item>HE</item>
+        <item>P</item>
+        <item>TH</item>
+        <item>DC</item>
+        <item>ET</item>
+        <item>DNA</item>
+        <item>TB</item>
+        <item>TG</item>
+        <item>HT</item>
+        <item>J</item>
+        <item>DB</item>
+        <item>AU</item>
+        <item>H</item>
+        <item>RP</item>
+        <item>NB</item>
+        <item>PK</item>
+        <item>BS</item>
+        <item>FE</item>
+        <item>MD</item>
+        <item>AA</item>
+        <item>N18</item>
+        <item>LM</item>
+        <item>GK</item>
+        <item>TeT</item>
+        <item>FP</item>
+        <item>ITI</item>
+        <item>IT</item>
+
+
+    </string-array>
+
 </resources>

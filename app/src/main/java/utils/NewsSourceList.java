@@ -8,10 +8,18 @@ public class NewsSourceList implements Serializable {
     String newsListLink;
     String newsListArticle;
     int sourceIndex = 0;
+    String newsSourceShort="";
 
     public NewsSourceList() {
     }
 
+    public String getNewsSourceShort() {
+        return newsSourceShort;
+    }
+
+    public void setNewsSourceShort(String newsSourceShort) {
+        this.newsSourceShort = newsSourceShort;
+    }
 
     public int getSourceIndex() {
         return sourceIndex;

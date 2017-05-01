@@ -28,8 +28,17 @@ public class NewsInfo implements Parcelable ,Serializable{
 
     private HashMap<String, Long> newsTweetListHashMap;
 
+    String newsSourceShort="";
 
     public NewsInfo() {
+    }
+
+    public String getNewsSourceShort() {
+        return newsSourceShort;
+    }
+
+    public void setNewsSourceShort(String newsSourceShort) {
+        this.newsSourceShort = newsSourceShort;
     }
 
     public HashMap<String, Long> getNewsTweetListHashMap() {

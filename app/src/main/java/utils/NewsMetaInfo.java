@@ -13,11 +13,34 @@ public class NewsMetaInfo implements Serializable{
     String newsDate;
     String newsPushKeyId;
     Bitmap newsImage;
+
+    long newsTime = 0l;
     String newsSource ;
     int newsSourceimageIndex =0;
 
+
+
+    String newsSourceShort="";
+
+
     public NewsMetaInfo() {
     }
+
+    public String getNewsSourceShort() {
+        return newsSourceShort;
+    }
+
+    public void setNewsSourceShort(String newsSourceShort) {
+        this.newsSourceShort = newsSourceShort;
+    }
+    public long getNewsTime() {
+        return newsTime;
+    }
+
+    public void setNewsTime(long newsTime) {
+        this.newsTime = newsTime;
+    }
+
 
     public int getNewsSourceimageIndex() {
         return newsSourceimageIndex;
