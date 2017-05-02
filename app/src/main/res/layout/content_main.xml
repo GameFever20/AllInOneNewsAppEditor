@@ -40,8 +40,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     android:minHeight="200dp"
+                    android:maxHeight="250dp"
                     android:scaleType="centerCrop"
                     android:onClick="onNewsImageClick"
+                    android:src="@color/colorPrimary"
                     />
 
                 <LinearLayout
@@ -49,14 +51,26 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:id="@+id/newsFeed_newsSourceImage_ImageView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
 
+                    <android.support.v7.widget.CardView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_margin="4dp"
                         android:onClick="onNewsSourceClick"
-                        android:src="@mipmap/ic_launcher" />
+                        app:cardBackgroundColor="@color/colorPrimary">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="\?"
+                            android:id="@+id/newsFeed_newsSourceshort_textView"
+
+                            android:textAlignment="center"
+                            android:textColor="#ffffff"
+                            android:textSize="24dp" />
+                    </android.support.v7.widget.CardView>
 
 
                     <TextView
@@ -65,7 +79,7 @@
                         android:layout_height="wrap_content"
                         android:layout_margin="4dp"
                         android:fontFamily="serif"
-                        android:text="News Heading"
+                        android:text="News Heading \n click here to edit it"
                         android:textColor="@color/descriptionColor"
                         android:textSize="20sp"
                         android:onClick="onHeadingClick"
@@ -92,6 +106,7 @@
                     android:layout_gravity="end"
                     android:fontFamily="monospace"
                     android:textAlignment="textEnd"
+                    android:onClick="onNewsSourceClick"
 
                     />
 
@@ -102,7 +117,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="16dp"
                     android:minHeight="300dp"
-                    android:text="Loading ...."
+                    android:text="News Article \n Click here to add text to it "
                     android:onClick="onNewsSummaryClick"
                     android:textSize="16sp" />
 
@@ -125,7 +140,7 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Source "
+            android:text="Add Other Source "
             android:onClick="onAddSourceButtonClick"
             />
 
@@ -197,14 +212,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="onUploadNewsArticleClick"
-            android:text="Upload" />
+
+            android:background="#f96565"
+            android:text="Upload and Publish" />
 
         <Button
             android:id="@+id/content_main_uploadDummy_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="uploadDummyData"
+            android:onClick="checkBuild"
             android:visibility="gone"
+
             android:text="Upload Dummy Data" />
 
         <Button

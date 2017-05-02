@@ -9,7 +9,7 @@ import java.io.Serializable;
  */
 
 public class NewsMetaInfo implements Serializable{
-    String newsHeading;
+    String newsHeading="";
     String newsDate;
     String newsPushKeyId;
     Bitmap newsImage;

@@ -1,5 +1,6 @@
 package editor.allinone.app.ads.craftystudio.allinonenewsappeditor;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -100,6 +101,8 @@ public class MainActivity extends AppCompatActivity
 
     NewsSourcesRecyclerAdapter newsSourcesRecyclerAdapter;
 
+    boolean isImageUploaded = false, isNewsInfoUploaded = false, isNewsMetaInfoUploaded = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,6 +169,18 @@ public class MainActivity extends AppCompatActivity
             public void onNewsImageLink(String ImageLink) {
 
             }
+
+            @Override
+            public void onNewsImageProgress(int progressComplete) {
+
+            }
+
+            @Override
+            public void onNewsFullArticle(int newsIndex) {
+
+            }
+
+
         });
         databaseHandlerFirebase.downloadImageFromFireBase(pushKeyId);
     }
@@ -317,6 +332,18 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(MainActivity.this, "Image Link " + ImageLink, Toast.LENGTH_SHORT).show();
                 imagePath = ImageLink;
             }
+
+            @Override
+            public void onNewsImageProgress(int progressComplete) {
+
+            }
+
+            @Override
+            public void onNewsFullArticle(int newsIndex) {
+
+            }
+
+
         });
 
     }
@@ -434,6 +461,18 @@ public class MainActivity extends AppCompatActivity
             public void onNewsImageLink(String ImageLink) {
 
             }
+
+            @Override
+            public void onNewsImageProgress(int progressComplete) {
+
+            }
+
+            @Override
+            public void onNewsFullArticle(int newsIndex) {
+
+            }
+
+
         });
 
     }
@@ -619,8 +658,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view, int position) {
                 //Toast.makeText(NewsFeedActivity.this, "Item clicked = " + position, Toast.LENGTH_SHORT).show();
-                newsSourceListArrayList.remove(position);
-                newsSourcesRecyclerAdapter.notifyDataSetChanged();
+                //newsSourceListArrayList.remove(position);
+                //newsSourcesRecyclerAdapter.notifyDataSetChanged();
 
             }
 
@@ -665,9 +704,17 @@ public class MainActivity extends AppCompatActivity
                 headingtext = articleEdittext.getText().toString();
                 newsSourceList.setNewsListArticle(headingtext);
 
+                int itempostion = spinner.getSelectedItemPosition();
+
+                newsSourceList.setNewsListSource(getResources().getStringArray(R.array.source_list)[itempostion]);
+                newsSourceList.setNewsSourceShort(getResources().getStringArray(R.array.source_list_short)[itempostion]);
+
+                newsSourceList.setSourceIndex(itempostion);
+
                 newsSourceListArrayList.remove(position);
                 newsSourceListArrayList.add(newsSourceList);
                 newsSourcesRecyclerAdapter.notifyDataSetChanged();
+                dialog.dismiss();
 
             }
         });
@@ -675,6 +722,14 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
+            }
+        });
+        builder.setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                newsSourceListArrayList.remove(position);
+                newsSourcesRecyclerAdapter.notifyDataSetChanged();
+
             }
         });
 
@@ -777,6 +832,13 @@ public class MainActivity extends AppCompatActivity
                         newsInfo.setNewsSourceShort(sourcename);
 
                         newsMetaInfo.setNewsSourceimageIndex(which);
+
+                        TextView textView = (TextView) findViewById(R.id.newsFeed_newsSourceshort_textView);
+                        textView.setText(newsInfo.getNewsSourceShort());
+
+                        textView = (TextView) findViewById(R.id.newsFeed_newsSource_textView);
+                        textView.setText(newsInfo.getNewsSource());
+
 
                         Toast.makeText(MainActivity.this, "Source is" + sourcename, Toast.LENGTH_SHORT).show();
 
@@ -891,6 +953,7 @@ public class MainActivity extends AppCompatActivity
 
     public void onPreviewClick(View view) {
         getObjectPrefrenceListDialogue();
+        //reLaunchActivity();
     }
 
     public void onSchduleClick(View view) {
@@ -1035,36 +1098,62 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
         Gson gson = new Gson();
         String json = "";
+        NewsMetaInfo newsMetaInfo =new NewsMetaInfo();
         try {
-            if (!mPrefs.getBoolean("MyObject1isEmpty", true)) {
-                json = mPrefs.getString("MyObject1newsMetaInfo", "");
-                NewsMetaInfo newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+            try {
+                if (!mPrefs.getBoolean("MyObject1isEmpty", true)) {
+                    json = mPrefs.getString("MyObject1newsMetaInfo", "");
+                     newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
-                stringArray[0] = newsMetaInfo.getNewsHeading();
+                    stringArray[0] = newsMetaInfo.getNewsHeading();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            if (!mPrefs.getBoolean("MyObject2isEmpty", true)) {
-                json = mPrefs.getString("MyObject2newsMetaInfo", "");
-                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                stringArray[1] = newsMetaInfo.getNewsHeading();
+            try {
+                if (!mPrefs.getBoolean("MyObject2isEmpty", true)) {
+                    json = mPrefs.getString("MyObject2newsMetaInfo", "");
+                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                    stringArray[1] = newsMetaInfo.getNewsHeading();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            if (!mPrefs.getBoolean("MyObject3isEmpty", true)) {
-                json = mPrefs.getString("MyObject3newsMetaInfo", "");
-                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                stringArray[2] = newsMetaInfo.getNewsHeading();
+            try {
+                if (!mPrefs.getBoolean("MyObject3isEmpty", true)) {
+                    json = mPrefs.getString("MyObject3newsMetaInfo", "");
+                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                    stringArray[2] = newsMetaInfo.getNewsHeading();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            if (mPrefs.getBoolean("MyObject4isEmpty", true)) {
-                json = mPrefs.getString("MyObject4newsMetaInfo", "");
-                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                stringArray[3] = newsMetaInfo.getNewsHeading();
+            try {
+                if (mPrefs.getBoolean("MyObject4isEmpty", true)) {
+                    json = mPrefs.getString("MyObject4newsMetaInfo", "");
+                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                    if(newsMetaInfo.getNewsHeading() !=null) {
+
+                        stringArray[3] = newsMetaInfo.getNewsHeading();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            if (mPrefs.getBoolean("MyObject5isEmpty", true)) {
-                json = mPrefs.getString("MyObject5newsMetaInfo", "");
-                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                stringArray[4] = newsMetaInfo.getNewsHeading();
+            try {
+                if (mPrefs.getBoolean("MyObject5isEmpty", true)) {
+                    json = mPrefs.getString("MyObject5newsMetaInfo", "");
+                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                   if(newsMetaInfo.getNewsHeading() !=null) {
+                       stringArray[4] = newsMetaInfo.getNewsHeading();
+                   }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         } catch (Exception e) {
@@ -1113,12 +1202,14 @@ public class MainActivity extends AppCompatActivity
             boolean isEmpty = mPrefs.getBoolean("MyObject1isEmpty", true);
 
             Gson gson = new Gson();
-            String json = mPrefs.getString("MyObject1newsInfo", "");
-            newsInfo = gson.fromJson(json, NewsInfo.class);
 
 
-            json = mPrefs.getString("MyObject1newsMetaInfo", "");
+            String json = mPrefs.getString("MyObject1newsMetaInfo", "");
             newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+
+             json = mPrefs.getString("MyObject1newsInfo", "");
+            newsInfo = gson.fromJson(json, NewsInfo.class);
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
             prefsEditor.putBoolean("MyObject1isEmpty", true);
@@ -1165,12 +1256,14 @@ public class MainActivity extends AppCompatActivity
             boolean isEmpty = mPrefs.getBoolean("MyObject2isEmpty", true);
 
             Gson gson = new Gson();
-            String json = mPrefs.getString("MyObject2newsInfo", "");
-            newsInfo = gson.fromJson(json, NewsInfo.class);
 
 
-            json = mPrefs.getString("MyObject2newsMetaInfo", "");
+            String json = mPrefs.getString("MyObject2newsMetaInfo", "");
             newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+
+             json = mPrefs.getString("MyObject2newsInfo", "");
+            newsInfo = gson.fromJson(json, NewsInfo.class);
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
             prefsEditor.putBoolean("MyObject2isEmpty", true);
@@ -1194,12 +1287,14 @@ public class MainActivity extends AppCompatActivity
             boolean isEmpty = mPrefs.getBoolean("MyObject3isEmpty", true);
 
             Gson gson = new Gson();
-            String json = mPrefs.getString("MyObject3newsInfo", "");
+
+
+            String json = mPrefs.getString("MyObject3newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+             json = mPrefs.getString("MyObject3newsInfo", "");
             newsInfo = gson.fromJson(json, NewsInfo.class);
 
-
-            json = mPrefs.getString("MyObject3newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
             prefsEditor.putBoolean("MyObject3isEmpty", true);
@@ -1220,12 +1315,14 @@ public class MainActivity extends AppCompatActivity
             boolean isEmpty = mPrefs.getBoolean("MyObject4isEmpty", true);
 
             Gson gson = new Gson();
-            String json = mPrefs.getString("MyObject4newsInfo", "");
+
+
+            String json = mPrefs.getString("MyObject4newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+             json = mPrefs.getString("MyObject4newsInfo", "");
             newsInfo = gson.fromJson(json, NewsInfo.class);
 
-
-            json = mPrefs.getString("MyObject4newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
             prefsEditor.putBoolean("MyObject4isEmpty", true);
@@ -1246,12 +1343,14 @@ public class MainActivity extends AppCompatActivity
             boolean isEmpty = mPrefs.getBoolean("MyObject5isEmpty", true);
 
             Gson gson = new Gson();
-            String json = mPrefs.getString("MyObject5newsInfo", "");
+
+
+            String json = mPrefs.getString("MyObject5newsMetaInfo", "");
+            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+             json = mPrefs.getString("MyObject5newsInfo", "");
             newsInfo = gson.fromJson(json, NewsInfo.class);
 
-
-            json = mPrefs.getString("MyObject5newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
             prefsEditor.putBoolean("MyObject5isEmpty", true);
@@ -1290,10 +1389,73 @@ public class MainActivity extends AppCompatActivity
 
     public void onUploadNewsArticleClick(View view) {
 
-        buildNewsPost();
 
-        DatabaseHandlerFirebase databaseHandlerFirebase =new DatabaseHandlerFirebase();
-        databaseHandlerFirebase.insertNewsFullArticle(newsMetaInfo, newsInfo, imageUri);
+
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Password");
+
+        LayoutInflater inflater = getLayoutInflater();
+
+        final View modifyView = inflater.inflate(R.layout.dialoguebox_edittext_layout, null);
+
+        builder.setView(modifyView);
+
+        final EditText editText = (EditText) modifyView.findViewById(R.id.dialogue_editText);
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+
+// Set up the buttons
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // String m_Text = input.getText().toString();
+                // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
+
+                int password  =Integer.parseInt( editText.getText().toString().trim());
+
+                if(password==2018){
+                    Toast.makeText(MainActivity.this, "Password Accepted", Toast.LENGTH_SHORT).show();
+                    postNewsFullArticle();
+                }else{
+
+                    Toast.makeText(MainActivity.this, "Wrong Password", Toast.LENGTH_SHORT).show();
+
+                }
+                dialog.dismiss();
+
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
+
+
+    }
+
+    private void postNewsFullArticle() {
+
+
+        if (!buildNewsPost()) {
+
+            return;
+        } else {
+            Toast.makeText(this, "Uploading Post Please Wait ...", Toast.LENGTH_SHORT).show();
+        }
+
+        final ProgressDialog pd = new ProgressDialog(MainActivity.this);
+        pd.setMessage("Uploading Post please Wait");
+        pd.show();
+
+
+        DatabaseHandlerFirebase databaseHandlerFirebase = new DatabaseHandlerFirebase();
         databaseHandlerFirebase.addNewsListListner(new DatabaseHandlerFirebase.DataBaseHandlerNewsUploadListner() {
             @Override
             public void onNewsList(ArrayList<NewsMetaInfo> newsMetaInfoArrayList) {
@@ -1303,44 +1465,198 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onNewsImageFetched(File imageFile) {
 
+
             }
 
             @Override
             public void onCancel() {
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Error uploading Post");
+                builder.setMessage("Contact Developer for more info");
+
+
+// Set up the buttons
+                builder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // String m_Text = input.getText().toString();
+                        // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+
+
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+
 
             }
 
             @Override
             public void onNewsImageLink(String ImageLink) {
 
+                isImageUploaded = true;
+                if (isNewsInfoUploaded) {
+                    pd.dismiss();
+
+                    reLaunchActivity();
+
+                } else {
+                    pd.setMessage("Uploading Post please Wait \n" + "Image Uploaded \n" + "uploading News ");
+                }
+
             }
+
+            @Override
+            public void onNewsImageProgress(int progressComplete) {
+
+            }
+
+            @Override
+            public void onNewsFullArticle(int newsIndex) {
+
+                isNewsInfoUploaded = true;
+                if (isImageUploaded) {
+                    pd.dismiss();
+                    reLaunchActivity();
+                } else {
+                    pd.setMessage("Uploading Post please Wait \n" + "News Uploaded \n" + "uploading Image ");
+
+                }
+
+            }
+
+
         });
+
+        databaseHandlerFirebase.insertNewsFullArticle(newsMetaInfo, newsInfo, imageUri);
+
 
     }
 
-    public void buildNewsPost() {
-        for (int i = 0; i < newsSourceListArrayList.size(); i++) {
-
-            newsSourceListHashMap.put("source" + i, newsSourceListArrayList.get(i));
-
-        }
-
-        for (int i = 0; i < tweetArrayList.size(); i++) {
-            tweetHashMap.put("tweet" + i, tweetArrayList.get(i));
-
-        }
-
-        newsInfo.setNewsSourceListHashMap(newsSourceListHashMap);
-        newsInfo.setNewsTweetListHashMap(tweetHashMap);
+    private void reLaunchActivity() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("Post Uploaded ");
+        builder.setMessage("Press ok To re launch app \n Exit to exit application ");
 
 
-        newsMetaInfo.setNewsTime(System.currentTimeMillis());
+// Set up the buttons
+        builder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // String m_Text = input.getText().toString();
+                // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+
+                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+
+
+            }
+        });
+        builder.setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                dialog.cancel();
+                finish();
+            }
+        });
+
+        builder.show();
+
+    }
+
+    public boolean buildNewsPost() {
+
+
+
+
+            newsSourceListHashMap=new HashMap<>();
+            for (int i = 0; i < newsSourceListArrayList.size(); i++) {
+
+
+
+                newsSourceListHashMap.put("source" + i, newsSourceListArrayList.get(i));
+                NewsSourceList newsSource = newsSourceListArrayList.get(i);
+                if (newsSource.getNewsListHeading().length() < 5) {
+                    Toast.makeText(this, "News Source heading too small", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+                if (newsSource.getNewsListArticle().length() < 10) {
+                    Toast.makeText(this, "News source article too small", Toast.LENGTH_SHORT).show();
+                    return false;
+
+                }
+                if (newsSource.getNewsListSource().length() < 1) {
+                    Toast.makeText(this, "News Source not selecteed ", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+            }
+
+            tweetHashMap=new HashMap<>();
+            for (int i = 0; i < tweetArrayList.size(); i++) {
+                tweetHashMap.put("tweet" + i, tweetArrayList.get(i));
+
+                if (tweetArrayList.get(i) < 0L) {
+                    Toast.makeText(this, "Invalid tweet id", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+            }
+
+            newsInfo.setNewsSourceListHashMap(newsSourceListHashMap);
+            newsInfo.setNewsTweetListHashMap(tweetHashMap);
+
+
+
+            if (newsInfo.getNewsHeadline().length() < 5) {
+                Toast.makeText(this, "News HEading too short", Toast.LENGTH_SHORT).show();
+                return false;
+
+            }
+            newsMetaInfo=new NewsMetaInfo();
+            newsMetaInfo.setNewsHeading(newsInfo.getNewsHeadline());
+            if (newsInfo.getNewsSource().length() < 1) {
+                Toast.makeText(this, "News source not selected ", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            newsMetaInfo.setNewsSource(newsInfo.getNewsSource());
+            newsMetaInfo.setNewsSourceShort(newsInfo.getNewsSourceShort());
+
+            if (newsInfo.getNewsSummary().length() < 10) {
+                Toast.makeText(this, "NEws article is too short ", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (imageUri == null) {
+                Toast.makeText(this, "News Image not selected", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            newsMetaInfo.setNewsTime(System.currentTimeMillis());
+
+
+
+
 
         Log.d(TAG, "buildNewsPost: " + newsInfo);
         Log.d(TAG, "buildNewsPost: " + newsMetaInfo);
         Log.d(TAG, "buildNewsPost: " + imageUri);
 
+        return true;
 
     }
 
+    public void checkBuild(View view) {
+        Toast.makeText(this, "Build "+buildNewsPost(), Toast.LENGTH_SHORT).show();
+    }
 }

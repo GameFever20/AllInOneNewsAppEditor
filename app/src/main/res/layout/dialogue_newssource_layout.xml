@@ -4,6 +4,13 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+
+    <Spinner
+        android:id="@+id/dialogue_newssource_source_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/source_list" />
+
     <EditText
         android:id="@+id/dialogue_newssource_heading_editText"
         android:layout_width="match_parent"
@@ -23,11 +30,6 @@
         android:minLines="5" />
 
 
-    <Spinner
-        android:id="@+id/dialogue_newssource_source_spinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:entries="@array/source_list" />
 
 
 </LinearLayout>
