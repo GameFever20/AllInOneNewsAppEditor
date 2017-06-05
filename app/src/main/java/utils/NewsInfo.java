@@ -16,10 +16,10 @@ public class NewsInfo implements Parcelable ,Serializable{
 
     private String newsHeadline="";
     private String newsSummary="";
-    private String newsSource;
-    private String newsCategory;
-    private String newsDate;
-    private String newsTime;
+    private String newsSource="";
+    private String newsCategory="";
+    private String newsDate="";
+    private String newsTime="";
     private String newsNotify;
     private String newsImageLink;
     private Bitmap newsImage;

@@ -11,8 +11,6 @@
     tools:showIn="@layout/app_bar_main">
 
 
-
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -39,12 +37,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    android:minHeight="200dp"
                     android:maxHeight="250dp"
-                    android:scaleType="centerCrop"
+                    android:minHeight="200dp"
                     android:onClick="onNewsImageClick"
-                    android:src="@color/colorPrimary"
-                    />
+                    android:scaleType="centerCrop"
+                    android:src="@color/colorPrimary" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -61,11 +58,11 @@
                         app:cardBackgroundColor="@color/colorPrimary">
 
                         <TextView
+                            android:id="@+id/newsFeed_newsSourceshort_textView"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:text="\?"
-                            android:id="@+id/newsFeed_newsSourceshort_textView"
 
                             android:textAlignment="center"
                             android:textColor="#ffffff"
@@ -79,10 +76,10 @@
                         android:layout_height="wrap_content"
                         android:layout_margin="4dp"
                         android:fontFamily="serif"
+                        android:onClick="onHeadingClick"
                         android:text="News Heading \n click here to edit it"
                         android:textColor="@color/descriptionColor"
                         android:textSize="20sp"
-                        android:onClick="onHeadingClick"
                         android:textStyle="bold" />
 
 
@@ -105,8 +102,8 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:fontFamily="monospace"
-                    android:textAlignment="textEnd"
                     android:onClick="onNewsSourceClick"
+                    android:textAlignment="textEnd"
 
                     />
 
@@ -117,8 +114,8 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="16dp"
                     android:minHeight="300dp"
-                    android:text="News Article \n Click here to add text to it "
                     android:onClick="onNewsSummaryClick"
+                    android:text="News Article \n Click here to add text to it "
                     android:textSize="16sp" />
 
 
@@ -140,33 +137,29 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Other Source "
             android:onClick="onAddSourceButtonClick"
-            />
+            android:text="Add Other Source " />
 
         <LinearLayout
             android:id="@+id/my_tweet_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:layout_marginBottom="30dp"
-            >
+            android:orientation="vertical">
 
         </LinearLayout>
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Tweet"
             android:onClick="onAddTweetClik"
-            />
+            android:text="Add Tweet" />
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Remove some  Tweet"
             android:onClick="onTweetViewClick"
-            />
+            android:text="Remove some  Tweet" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -201,19 +194,25 @@
                 android:hint="category" />
 
 
-
         </LinearLayout>
 
 
+        <CheckBox
+            android:id="@+id/newsFeed_newsNotification_checkBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Notification to user"
+            android:layout_margin="32dp"
+            />
 
         <!--Action Button Here-->
         <Button
             android:id="@+id/content_main_upload_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="onUploadNewsArticleClick"
-
             android:background="#f96565"
+
+            android:onClick="onUploadNewsArticleClick"
             android:text="Upload and Publish" />
 
         <Button
@@ -221,9 +220,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="checkBuild"
-            android:visibility="gone"
+            android:text="Upload Dummy Data"
 
-            android:text="Upload Dummy Data" />
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/content_main_preview_button"
@@ -238,7 +237,6 @@
             android:layout_height="wrap_content"
             android:onClick="onSchduleClick"
             android:text="Save in memory" />
-
 
 
     </LinearLayout>

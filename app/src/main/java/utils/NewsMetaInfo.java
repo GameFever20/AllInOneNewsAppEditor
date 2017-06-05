@@ -10,20 +10,29 @@ import java.io.Serializable;
 
 public class NewsMetaInfo implements Serializable{
     String newsHeading="";
-    String newsDate;
+    String newsDate="";
     String newsPushKeyId;
     Bitmap newsImage;
 
     long newsTime = 0l;
-    String newsSource ;
+    String newsSource  ="";
     int newsSourceimageIndex =0;
 
+    boolean newsNotification =false;
 
 
     String newsSourceShort="";
 
 
     public NewsMetaInfo() {
+    }
+
+    public boolean isNewsNotification() {
+        return newsNotification;
+    }
+
+    public void setNewsNotification(boolean newsNotification) {
+        this.newsNotification = newsNotification;
     }
 
     public String getNewsSourceShort() {

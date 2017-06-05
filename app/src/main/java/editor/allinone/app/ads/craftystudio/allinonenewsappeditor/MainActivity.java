@@ -29,6 +29,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -139,6 +141,17 @@ public class MainActivity extends AppCompatActivity
         initializeRecyclerView();
         newsInfo.setNewsTweetListHashMap(tweetHashMap);
 
+
+        CheckBox checkBox = (CheckBox) findViewById(R.id.newsFeed_newsNotification_checkBox);
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (newsMetaInfo != null) {
+                    newsMetaInfo.setNewsNotification(isChecked);
+                }
+            }
+        });
+
     }
 
     private void downloadImage(String pushKeyId) {
@@ -224,7 +237,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+        return false;
     }
 
     @Override
@@ -1098,14 +1111,18 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
         Gson gson = new Gson();
         String json = "";
-        NewsMetaInfo newsMetaInfo =new NewsMetaInfo();
+        NewsMetaInfo newsMetaInfo = new NewsMetaInfo();
         try {
             try {
                 if (!mPrefs.getBoolean("MyObject1isEmpty", true)) {
                     json = mPrefs.getString("MyObject1newsMetaInfo", "");
-                     newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
-                    stringArray[0] = newsMetaInfo.getNewsHeading();
+                    if (!json.isEmpty()) {
+                        newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+                        stringArray[0] = newsMetaInfo.getNewsHeading();
+                    }
+
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1114,8 +1131,11 @@ public class MainActivity extends AppCompatActivity
             try {
                 if (!mPrefs.getBoolean("MyObject2isEmpty", true)) {
                     json = mPrefs.getString("MyObject2newsMetaInfo", "");
-                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                    stringArray[1] = newsMetaInfo.getNewsHeading();
+
+                    if (!json.isEmpty()) {
+                        newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                        stringArray[1] = newsMetaInfo.getNewsHeading();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1124,8 +1144,12 @@ public class MainActivity extends AppCompatActivity
             try {
                 if (!mPrefs.getBoolean("MyObject3isEmpty", true)) {
                     json = mPrefs.getString("MyObject3newsMetaInfo", "");
-                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                    stringArray[2] = newsMetaInfo.getNewsHeading();
+
+
+                    if (!json.isEmpty()) {
+                        newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                        stringArray[2] = newsMetaInfo.getNewsHeading();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1134,11 +1158,13 @@ public class MainActivity extends AppCompatActivity
             try {
                 if (mPrefs.getBoolean("MyObject4isEmpty", true)) {
                     json = mPrefs.getString("MyObject4newsMetaInfo", "");
-                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                    if(newsMetaInfo.getNewsHeading() !=null) {
+
+                    if (!json.isEmpty()) {
+                        newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
                         stringArray[3] = newsMetaInfo.getNewsHeading();
                     }
+
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1147,10 +1173,12 @@ public class MainActivity extends AppCompatActivity
             try {
                 if (mPrefs.getBoolean("MyObject5isEmpty", true)) {
                     json = mPrefs.getString("MyObject5newsMetaInfo", "");
-                    newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
-                   if(newsMetaInfo.getNewsHeading() !=null) {
-                       stringArray[4] = newsMetaInfo.getNewsHeading();
-                   }
+
+                    if (!json.isEmpty()) {
+                        newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+                        stringArray[4] = newsMetaInfo.getNewsHeading();
+                    }
+
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1205,11 +1233,17 @@ public class MainActivity extends AppCompatActivity
 
 
             String json = mPrefs.getString("MyObject1newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+            if (!json.isEmpty()) {
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+            }
 
 
-             json = mPrefs.getString("MyObject1newsInfo", "");
-            newsInfo = gson.fromJson(json, NewsInfo.class);
+            json = mPrefs.getString("MyObject1newsInfo", "");
+
+            if (!json.isEmpty()) {
+                newsInfo = gson.fromJson(json, NewsInfo.class);
+            }
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
             prefsEditor.putBoolean("MyObject1isEmpty", true);
@@ -1259,11 +1293,17 @@ public class MainActivity extends AppCompatActivity
 
 
             String json = mPrefs.getString("MyObject2newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+
+            if (!json.isEmpty()) {
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+            }
 
 
-             json = mPrefs.getString("MyObject2newsInfo", "");
-            newsInfo = gson.fromJson(json, NewsInfo.class);
+            json = mPrefs.getString("MyObject2newsInfo", "");
+
+            if (!json.isEmpty()) {
+                newsInfo = gson.fromJson(json, NewsInfo.class);
+            }
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
             prefsEditor.putBoolean("MyObject2isEmpty", true);
@@ -1290,10 +1330,16 @@ public class MainActivity extends AppCompatActivity
 
 
             String json = mPrefs.getString("MyObject3newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
-             json = mPrefs.getString("MyObject3newsInfo", "");
-            newsInfo = gson.fromJson(json, NewsInfo.class);
+            if (!json.isEmpty()) {
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+            }
+
+            json = mPrefs.getString("MyObject3newsInfo", "");
+
+            if (!json.isEmpty()) {
+                newsInfo = gson.fromJson(json, NewsInfo.class);
+            }
 
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
@@ -1318,10 +1364,16 @@ public class MainActivity extends AppCompatActivity
 
 
             String json = mPrefs.getString("MyObject4newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
-             json = mPrefs.getString("MyObject4newsInfo", "");
-            newsInfo = gson.fromJson(json, NewsInfo.class);
+            if (!json.isEmpty()) {
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+            }
+
+            json = mPrefs.getString("MyObject4newsInfo", "");
+
+            if (!json.isEmpty()) {
+                newsInfo = gson.fromJson(json, NewsInfo.class);
+            }
 
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
@@ -1346,10 +1398,16 @@ public class MainActivity extends AppCompatActivity
 
 
             String json = mPrefs.getString("MyObject5newsMetaInfo", "");
-            newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
 
-             json = mPrefs.getString("MyObject5newsInfo", "");
-            newsInfo = gson.fromJson(json, NewsInfo.class);
+            if (!json.isEmpty()) {
+                newsMetaInfo = gson.fromJson(json, NewsMetaInfo.class);
+            }
+
+            json = mPrefs.getString("MyObject5newsInfo", "");
+
+            if (!json.isEmpty()) {
+                newsInfo = gson.fromJson(json, NewsInfo.class);
+            }
 
 
             SharedPreferences.Editor prefsEditor = mPrefs.edit();
@@ -1390,9 +1448,6 @@ public class MainActivity extends AppCompatActivity
     public void onUploadNewsArticleClick(View view) {
 
 
-
-
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Password");
 
@@ -1413,12 +1468,12 @@ public class MainActivity extends AppCompatActivity
                 // String m_Text = input.getText().toString();
                 // Toast.makeText(MainActivity.this, "text is "+m_Text, Toast.LENGTH_SHORT).show();
 
-                int password  =Integer.parseInt( editText.getText().toString().trim());
+                int password = Integer.parseInt(editText.getText().toString().trim());
 
-                if(password==2018){
+                if (password == 2018) {
                     Toast.makeText(MainActivity.this, "Password Accepted", Toast.LENGTH_SHORT).show();
                     postNewsFullArticle();
-                }else{
+                } else {
 
                     Toast.makeText(MainActivity.this, "Wrong Password", Toast.LENGTH_SHORT).show();
 
@@ -1435,7 +1490,6 @@ public class MainActivity extends AppCompatActivity
         });
 
         builder.show();
-
 
 
     }
@@ -1578,74 +1632,71 @@ public class MainActivity extends AppCompatActivity
     public boolean buildNewsPost() {
 
 
+        newsSourceListHashMap = new HashMap<>();
+        for (int i = 0; i < newsSourceListArrayList.size(); i++) {
 
 
-            newsSourceListHashMap=new HashMap<>();
-            for (int i = 0; i < newsSourceListArrayList.size(); i++) {
-
-
-
-                newsSourceListHashMap.put("source" + i, newsSourceListArrayList.get(i));
-                NewsSourceList newsSource = newsSourceListArrayList.get(i);
-                if (newsSource.getNewsListHeading().length() < 5) {
-                    Toast.makeText(this, "News Source heading too small", Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-                if (newsSource.getNewsListArticle().length() < 10) {
-                    Toast.makeText(this, "News source article too small", Toast.LENGTH_SHORT).show();
-                    return false;
-
-                }
-                if (newsSource.getNewsListSource().length() < 1) {
-                    Toast.makeText(this, "News Source not selecteed ", Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-
+            newsSourceListHashMap.put("source" + i, newsSourceListArrayList.get(i));
+            NewsSourceList newsSource = newsSourceListArrayList.get(i);
+            if (newsSource.getNewsListHeading().length() < 5) {
+                Toast.makeText(this, "News Source heading too small", Toast.LENGTH_SHORT).show();
+                return false;
             }
-
-            tweetHashMap=new HashMap<>();
-            for (int i = 0; i < tweetArrayList.size(); i++) {
-                tweetHashMap.put("tweet" + i, tweetArrayList.get(i));
-
-                if (tweetArrayList.get(i) < 0L) {
-                    Toast.makeText(this, "Invalid tweet id", Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-
-            }
-
-            newsInfo.setNewsSourceListHashMap(newsSourceListHashMap);
-            newsInfo.setNewsTweetListHashMap(tweetHashMap);
-
-
-
-            if (newsInfo.getNewsHeadline().length() < 5) {
-                Toast.makeText(this, "News HEading too short", Toast.LENGTH_SHORT).show();
+            if (newsSource.getNewsListArticle().length() < 10) {
+                Toast.makeText(this, "News source article too small", Toast.LENGTH_SHORT).show();
                 return false;
 
             }
-            newsMetaInfo=new NewsMetaInfo();
-            newsMetaInfo.setNewsHeading(newsInfo.getNewsHeadline());
-            if (newsInfo.getNewsSource().length() < 1) {
-                Toast.makeText(this, "News source not selected ", Toast.LENGTH_SHORT).show();
-                return false;
-            }
-            newsMetaInfo.setNewsSource(newsInfo.getNewsSource());
-            newsMetaInfo.setNewsSourceShort(newsInfo.getNewsSourceShort());
-
-            if (newsInfo.getNewsSummary().length() < 10) {
-                Toast.makeText(this, "NEws article is too short ", Toast.LENGTH_SHORT).show();
-                return false;
-            }
-            if (imageUri == null) {
-                Toast.makeText(this, "News Image not selected", Toast.LENGTH_SHORT).show();
+            if (newsSource.getNewsListSource().length() < 1) {
+                Toast.makeText(this, "News Source not selecteed ", Toast.LENGTH_SHORT).show();
                 return false;
             }
 
-            newsMetaInfo.setNewsTime(System.currentTimeMillis());
+        }
+
+        tweetHashMap = new HashMap<>();
+        for (int i = 0; i < tweetArrayList.size(); i++) {
+            tweetHashMap.put("tweet" + i, tweetArrayList.get(i));
+
+            if (tweetArrayList.get(i) < 0L) {
+                Toast.makeText(this, "Invalid tweet id", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+        }
+
+        newsInfo.setNewsSourceListHashMap(newsSourceListHashMap);
+        newsInfo.setNewsTweetListHashMap(tweetHashMap);
 
 
+        if (newsInfo.getNewsHeadline().length() < 5) {
+            Toast.makeText(this, "News HEading too short", Toast.LENGTH_SHORT).show();
+            return false;
 
+        }
+        newsMetaInfo = new NewsMetaInfo();
+        newsMetaInfo.setNewsHeading(newsInfo.getNewsHeadline());
+        if (newsInfo.getNewsSource().length() < 1) {
+            Toast.makeText(this, "News source not selected ", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        newsMetaInfo.setNewsSource(newsInfo.getNewsSource());
+        newsMetaInfo.setNewsSourceShort(newsInfo.getNewsSourceShort());
+
+        if (newsInfo.getNewsSummary().length() < 10) {
+            Toast.makeText(this, "NEws article is too short ", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (imageUri == null) {
+            Toast.makeText(this, "News Image not selected", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        CheckBox checkBox = (CheckBox) findViewById(R.id.newsFeed_newsNotification_checkBox);
+        newsMetaInfo.setNewsNotification(checkBox.isChecked());
+
+
+        newsMetaInfo.setNewsTime(System.currentTimeMillis());
 
 
         Log.d(TAG, "buildNewsPost: " + newsInfo);
@@ -1657,6 +1708,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void checkBuild(View view) {
-        Toast.makeText(this, "Build "+buildNewsPost(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Build " + buildNewsPost(), Toast.LENGTH_SHORT).show();
     }
 }
