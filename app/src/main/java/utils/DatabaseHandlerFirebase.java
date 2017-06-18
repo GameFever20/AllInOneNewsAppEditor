@@ -1,6 +1,7 @@
 package utils;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -10,9 +11,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
@@ -35,6 +39,7 @@ public class DatabaseHandlerFirebase {
 
     private FirebaseDatabase mDatabase;
     private DataBaseHandlerNewsUploadListner dataBaseHandlerNewsUpload;
+    DataBaseHandlerNewsListListner databaseNewsListListner ;
 
 
     public DatabaseHandlerFirebase() {
@@ -160,6 +165,27 @@ public class DatabaseHandlerFirebase {
 
     }
 
+    public void addNewsListListner(DataBaseHandlerNewsListListner databaseNewsListListner) {
+
+        this.databaseNewsListListner = databaseNewsListListner;
+
+    }
+
+    public void deleteNewsMetaInfo(String newsPushKeyId) {
+
+        DatabaseReference myRef = mDatabase.getReference().child("NewsMetaInfo/"+newsPushKeyId);
+
+        myRef.removeValue();
+
+        DatabaseReference myRef2 = mDatabase.getReference().child("NewsInfo/"+newsPushKeyId);
+
+        myRef2.removeValue();
+
+
+
+
+    }
+
 
     public interface DataBaseHandlerNewsUploadListner {
         public void onNewsList(ArrayList<NewsMetaInfo> newsMetaInfoArrayList);
@@ -173,6 +199,138 @@ public class DatabaseHandlerFirebase {
         public void onNewsImageProgress(int progressComplete);
 
         public void onNewsFullArticle(int newsIndex);
+    }
+
+
+
+    public void getNewsList(int limit ) {
+
+        DatabaseReference myRef = mDatabase.getReference().child("NewsMetaInfo");
+
+        Query myref2 = myRef.limitToLast(limit);
+
+        myref2.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                ArrayList<NewsMetaInfo> newsMetaInfoArrayList = new ArrayList<NewsMetaInfo>();
+
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    NewsMetaInfo newsMetaInfo = snapshot.getValue(NewsMetaInfo.class);
+
+
+                    newsMetaInfoArrayList.add(newsMetaInfo);
+                }
+
+                /*Reversing Array list element */
+                ArrayList<NewsMetaInfo> newsMetaInfoArrayListFinal = new ArrayList<NewsMetaInfo>();
+                for (int i = newsMetaInfoArrayList.size() - 1; i >= 0; i--) {
+                    downloadImageFromFireBase(newsMetaInfoArrayList.get(i));
+                    newsMetaInfoArrayListFinal.add(newsMetaInfoArrayList.get(i));
+                }
+
+                if (databaseNewsListListner != null) {
+                    databaseNewsListListner.onNewsList(newsMetaInfoArrayListFinal);
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                if (databaseNewsListListner != null) {
+                    databaseNewsListListner.onCancel();
+                }
+
+            }
+        });
+
+
+    }
+
+    public void downloadImageFromFireBase(final NewsMetaInfo newsMetaInfo  ) {
+        StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
+        StorageReference riversRef = mStorageRef.child("NewsMetaInfo/newsImage" + newsMetaInfo.getNewsPushKeyId() + ".jpg");
+
+
+        File localFile = null;
+        try {
+            localFile = File.createTempFile("images", ".jpg");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        final File finalLocalFile = localFile;
+        riversRef.getFile(localFile)
+                .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                        // Successfully downloaded data to local file
+                        // ...
+                        newsMetaInfo.setNewsImage(BitmapFactory.decodeFile(finalLocalFile.getPath()));
+                        newsMetaInfo.setNewsImageLocalPath(finalLocalFile.getPath());
+                        databaseNewsListListner.onNewsImageFetched(true);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle failed download
+                // ...
+            }
+        });
+
+
+    }
+
+
+    public void getNewsListMore(String lastPushKeyId , int limit){
+
+        DatabaseReference myRef = mDatabase.getReference().child("NewsMetaInfo");
+
+        Query myref2 = myRef.orderByKey().endAt(lastPushKeyId).limitToLast(limit);
+        myref2.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                ArrayList<NewsMetaInfo> newsMetaInfoArrayList = new ArrayList<NewsMetaInfo>();
+
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    NewsMetaInfo newsMetaInfo = snapshot.getValue(NewsMetaInfo.class);
+
+                    downloadImageFromFireBase(newsMetaInfo);
+                    newsMetaInfoArrayList.add(newsMetaInfo);
+                }
+                if (databaseNewsListListner != null) {
+                    databaseNewsListListner.ongetNewsListMore(newsMetaInfoArrayList);
+                }
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+                if (databaseNewsListListner != null) {
+                    databaseNewsListListner.onCancel();
+                }
+            }
+        });
+
+
+    }
+
+
+
+    public interface DataBaseHandlerNewsListListner {
+        public void onNewsList(ArrayList<NewsMetaInfo> newsMetaInfoArrayList);
+
+        public void onCancel();
+
+        public void onNoticePost(boolean isSuccessful);
+
+        void onNewsImageFetched(boolean isFetchedImage);
+
+        public void onNewsInfo(NewsInfo newsInfo);
+
+        public void ongetNewsListMore(ArrayList<NewsMetaInfo> newsMetaInfoArrayListMore);
     }
 
 
